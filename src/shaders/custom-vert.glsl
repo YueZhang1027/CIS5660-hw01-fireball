@@ -1,5 +1,7 @@
 #version 300 es
 
+#define TURBULENCE_STEP 10
+
 uniform mat4 u_Model;       // The matrix that defines the transformation of the
                             // object we're rendering. In this assignment,
                             // this will be the result of traversing your scene graph.
@@ -22,41 +24,117 @@ in vec4 vs_Col;             // The array of vertex colors passed to the shader.
 out vec4 fs_Nor;            // The array of normals that has been transformed by u_ModelInvTr. This is implicitly passed to the fragment shader.
 out vec4 fs_LightVec;       // The direction in which our virtual light lies, relative to each vertex. This is implicitly passed to the fragment shader.
 out vec4 fs_Col;            // The color of each vertex. This is implicitly passed to the fragment shader.
+
 out float fs_Time;
+out float fs_Density;
 
 const vec4 lightPos = vec4(5, 5, 3, 1); //The position of our virtual light, which is used to compute the shading of
                                         //the geometry in the fragment shader.
 
-float random1(vec3 p) {
-    return fract(sin((dot(p, vec3(127.1,
-                                  311.7,
-                                  191.999)))) *         
+vec3 random3(vec3 p) {
+    return fract(sin(vec3(dot(p, vec3(127.1, 311.7, 489.1)),
+                          dot(p, vec3(269.5, 183.3, 892.5)),
+                          dot(p, vec3(420.6, 631.2, 458.8))
+                    )) * 43758.5453);
+}
+
+float noise3D(vec3 p) {
+    return fract(sin(dot(p, vec3(127.1, 311.7, 721.5))) *
                  43758.5453);
+
 }
 
-float interpNoise1D(vec3 p) {
-    vec3 intP = floor(p);
-    vec3 fractP = fract(p);
+float interpNoise3D(vec3 p) {
+    int intX = int(floor(p.x)), intY = int(floor(p.y)), intZ = int(floor(p.z));
+    float fractX = fract(p.x), fractY = fract(p.y), fractZ = fract(p.z);
 
-    float v1 = random1(intP);
-    float v2 = random1(intP + vec3(1.0));
-    return smoothstep(v1, v2, fractP.z);
+    float v1 = noise3D(vec3(intX, intY, intZ));
+    float v2 = noise3D(vec3(intX + 1, intY, intZ));
+    float v3 = noise3D(vec3(intX, intY + 1, intZ));
+    float v4 = noise3D(vec3(intX + 1, intY + 1, intZ));
+    float v5 = noise3D(vec3(intX, intY, intZ + 1));
+    float v6 = noise3D(vec3(intX + 1, intY, intZ + 1));
+    float v7 = noise3D(vec3(intX, intY + 1, intZ + 1));
+    float v8 = noise3D(vec3(intX + 1, intY + 1, intZ + 1));
+
+    float i1 = mix(v1, v2, fractX);
+    float i2 = mix(v3, v4, fractX);
+    float i3 = mix(v5, v6, fractX);
+    float i4 = mix(v7, v8, fractX);
+
+    float j1 = mix(i1, i2, fractY);
+    float j2 = mix(i3, i4, fractY);
+
+    return mix(j1, j2, fractZ);
 }
 
 
-float fbm(vec3 p) {
+// a higher-frequency, lower-amplitude layer of fractal Brownian motion to apply a finer level of distortion.
+// ref: https://www.shadertoy.com/view/3lcfWN
+float fbm_displacement(vec3 p) {
     float total = 0.0;
-    float persistence = 0.5f;
+    float persistence = 1.f / 16.f;
     int octaves = 8;
-    float freq = 2.f;
+    float freq = 8.f;
     float amp = 0.5f;
     for(int i = 1; i <= octaves; i++) {
-        total += interpNoise1D(p * freq) * amp;
+        total += interpNoise3D(p * freq) * amp;
 
         freq *= 2.f;
         amp *= persistence;
     }
     return total;
+}
+
+float surflet(vec3 p, vec3 gridPoint) {
+    // Compute the distance between p and the grid point along each axis, and warp it with a
+    // quintic function so we can smooth our cells
+    vec3 t2 = abs(p - gridPoint);
+    vec3 t = vec3(1.f) - 6.f * pow(t2, vec3(5.f)) + 15.f * pow(t2, vec3(4.f)) - 10.f * pow(t2, vec3(3.f));
+    // Get the random vector for the grid point (assume we wrote a function random2
+    // that returns a vec2 in the range [0, 1])
+    vec3 gradient = random3(gridPoint) * 2. - vec3(1., 1., 1.);
+    // Get the vector from the grid point to P
+    vec3 diff = p - gridPoint;
+    // Get the value of our height field by dotting grid->P with our gradient
+    float height = dot(diff, gradient);
+    // Scale our height field (i.e. reduce it) by our polynomial falloff function
+    return height * t.x * t.y * t.z;
+}
+
+
+float perlinNoise(vec3 p) {
+	float surfletSum = 0.f;
+	// Iterate over the four integer corners surrounding uv
+	for(int dx = 0; dx <= 1; ++dx) {
+		for(int dy = 0; dy <= 1; ++dy) {
+			for (int dz = 0; dz <= 1; ++dz) {
+                surfletSum += surflet(p, floor(p) + vec3(dx, dy, dz));
+            }
+		}
+	}
+	return surfletSum;
+}
+
+// a low-frequency, high-amplitude displacement of your sphere so as to make it less uniformly sphere-like
+// turbulence from formula sum(abs(1 / 2^i * noise(2^i * x))
+// ref: https://www.clicktorelease.com/blog/vertex-displacement-noise-3d-webgl-glsl-three-js/
+// ref: https://www.shadertoy.com/view/MtXSzS
+float turbulence(vec3 p) {
+  float value = 0.0;
+  float step = 2.0;
+  float amplitude = 0.6;
+
+  for (int f = 1 ; f <= TURBULENCE_STEP; f++ ){
+    value += abs(perlinNoise(vec3(step * p)) / step);
+    step *= 2.0;
+  }
+
+  return value * amplitude;
+}
+
+float sphere(vec3 p) {
+    return 0.0;
 }
 
 
@@ -73,11 +151,27 @@ void main()
 
     float time = float(u_Time);
     fs_Time = time;
-    float noise = fbm(vec3(vs_Pos) + 0.1 * cos(0.003 * time) + 0.5 * sin(0.002 * time));
 
-    vec4 normal_noise = 0.5 * normalize(fs_Nor) * noise;
+    // combining fbm noise and turblence perlin noise (distortion) to form shape
+    vec4 modelposition = u_Model * vs_Pos;   // Temporarily store the transformed vertex positions for use below
 
-    vec4 modelposition = u_Model * vs_Pos + normal_noise;   // Temporarily store the transformed vertex positions for use below
+    float turbulence_noise = turbulence(vec3(fs_Nor) + vec3(0.002 * time));
+
+    vec3 seed = vec3(vs_Pos) + vec3(0.05 * cos(0.005 * time), -0.005 * time, 0.0); // + 0.05 * cos(0.005 * time)
+    float fbm_noise1 = fbm_displacement(seed);
+    float fbm_noise2 = fbm_displacement(seed + vec3(fbm_noise1));
+
+    modelposition += fs_Nor * mix(turbulence_noise, fbm_noise2, smoothstep(0.0, 1.0, (1.0 + vs_Nor.y) / 2.0));
+
+    // flame shape
+    vec3 direction = vec3(0., 1., 0.);
+    float prod = dot(direction, vec3(fs_Nor));
+    if (prod > 0.0) {
+        modelposition += vec4(direction * prod, 0.0) * fbm_noise1 * 1.8f;
+    }
+
+    fs_Density = turbulence(vec3(vs_Pos) + vec3(0.002 * time)) + length(vec3(vs_Pos));
+
 
     fs_LightVec = lightPos - modelposition;  // Compute the direction in which the light source lies
 

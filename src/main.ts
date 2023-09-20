@@ -13,7 +13,7 @@ import ShaderProgram, {Shader} from './rendering/gl/ShaderProgram';
 const controls = {
   tesselations: 5,
   'Load Scene': loadScene, // A function pointer, essentially
-  color: [0, 120, 255, 255],
+  color: [255, 0, 0, 255],
 };
 
 let icosphere: Icosphere;

@@ -41,7 +41,6 @@ vec3 random3(vec3 p) {
 float noise3D(vec3 p) {
     return fract(sin(dot(p, vec3(127.1, 311.7, 721.5))) *
                  43758.5453);
-
 }
 
 float interpNoise3D(vec3 p) {
@@ -73,10 +72,10 @@ float interpNoise3D(vec3 p) {
 // ref: https://www.shadertoy.com/view/3lcfWN
 float fbm_displacement(vec3 p) {
     float total = 0.0;
-    float persistence = 1.f / 16.f;
+    float persistence = 1.f / 8.f;
     int octaves = 8;
-    float freq = 8.f;
-    float amp = 0.5f;
+    float freq = 16.f;
+    float amp = 0.2f;
     for(int i = 1; i <= octaves; i++) {
         total += interpNoise3D(p * freq) * amp;
 
@@ -123,7 +122,7 @@ float perlinNoise(vec3 p) {
 float turbulence(vec3 p) {
   float value = 0.0;
   float step = 2.0;
-  float amplitude = 0.6;
+  float amplitude = 0.5;
 
   for (int f = 1 ; f <= TURBULENCE_STEP; f++ ){
     value += abs(perlinNoise(vec3(step * p)) / step);
@@ -132,11 +131,6 @@ float turbulence(vec3 p) {
 
   return value * amplitude;
 }
-
-float sphere(vec3 p) {
-    return 0.0;
-}
-
 
 void main()
 {
@@ -149,28 +143,42 @@ void main()
                                                             // perpendicular to the surface after the surface is transformed by
                                                             // the model matrix.
 
-    float time = float(u_Time);
+    float time = float(u_Time) * 0.01;
     fs_Time = time;
 
     // combining fbm noise and turblence perlin noise (distortion) to form shape
     vec4 modelposition = u_Model * vs_Pos;   // Temporarily store the transformed vertex positions for use below
 
-    float turbulence_noise = turbulence(vec3(fs_Nor) + vec3(0.002 * time));
+    // basic turbulence shape, determine color
+    vec4 normal_noise = vec4(0.0f);
+    float turbulence_noise = turbulence(vec3(fs_Nor) + vec3(0.2f * time));
 
-    vec3 seed = vec3(vs_Pos) + vec3(0.05 * cos(0.005 * time), -0.005 * time, 0.0); // + 0.05 * cos(0.005 * time)
-    float fbm_noise1 = fbm_displacement(seed);
-    float fbm_noise2 = fbm_displacement(seed + vec3(fbm_noise1));
+    normal_noise += fs_Nor * turbulence_noise;
 
-    modelposition += fs_Nor * mix(turbulence_noise, fbm_noise2, smoothstep(0.0, 1.0, (1.0 + vs_Nor.y) / 2.0));
+    // Use fbm to produce smoke/fire surrounding
+    // Domain Warping FBM, ref: https://thebookofshaders.com/13/
 
-    // flame shape
+    vec3 q = vec3(fbm_displacement(vec3(vs_Pos) - 0.001 * time), 
+                  fbm_displacement(vec3(vs_Pos) + vec3 (0.05, -0.03, 0.02)),
+                  fbm_displacement(vec3(vs_Pos) + 0.05 * cos(0.005 * time)));
+
+    vec3 r = vec3(fbm_displacement(vec3(vs_Pos) + q + vec3(0.3, 0.2, -0.4) + 0.15 * time), 
+                  fbm_displacement(vec3(vs_Pos) + q + vec3(-2.3, 8.2, -5.4) + 0.126 * time), 
+                  fbm_displacement(vec3(vs_Pos) + q + vec3(-3.3, -4.6, 6.7) - 0.24 * time));
+
+    float fbm_noise = fbm_displacement(vec3(vs_Nor) + r);
+    normal_noise += vec4(r, 0.0);
+
+    // flame shape trail
     vec3 direction = vec3(0., 1., 0.);
     float prod = dot(direction, vec3(fs_Nor));
     if (prod > 0.0) {
-        modelposition += vec4(direction * prod, 0.0) * fbm_noise1 * 1.8f;
+        //normal_noise += vec4(normalize(vec3(-fs_Nor.x, 10.0, -fs_Nor.z)) * prod, 0.0) * sqrt(fbm_noise) * 2.5;
     }
 
-    fs_Density = turbulence(vec3(vs_Pos) + vec3(0.002 * time)) + length(vec3(vs_Pos));
+    modelposition += normal_noise;
+
+    fs_Density = turbulence(vec3(vs_Pos) + vec3(0.2f * time)) + length(vec3(vs_Pos));
 
 
     fs_LightVec = lightPos - modelposition;  // Compute the direction in which the light source lies

@@ -16,14 +16,17 @@ const controls = {
   color: [255, 0, 0, 255],
 };
 
-let icosphere: Icosphere;
+let core: Icosphere;
+let fire: Icosphere;
 let square: Square;
 let prevTesselations: number = 5;
 let time: number = 0;
 
 function loadScene() {
-  icosphere = new Icosphere(vec3.fromValues(0, 0, 0), 1, controls.tesselations);
-  icosphere.create();
+  core = new Icosphere(vec3.fromValues(0, 0, 0), 1, controls.tesselations);
+  core.create();
+  fire = new Icosphere(vec3.fromValues(0, 0, 0), 1.01, controls.tesselations);
+  fire.create();
   square = new Square(vec3.fromValues(0, 0, 0));
   square.create();
 }
@@ -74,8 +77,8 @@ function main() {
   ]);
 
   const custom = new ShaderProgram([
-    new Shader(gl.VERTEX_SHADER, require('./shaders/custom-vert.glsl')),
-    new Shader(gl.FRAGMENT_SHADER, require('./shaders/custom-frag.glsl')),
+    new Shader(gl.VERTEX_SHADER, require('./shaders/core-vert.glsl')),
+    new Shader(gl.FRAGMENT_SHADER, require('./shaders/core-frag.glsl')),
   ]);
 
   // This function will be called every frame
@@ -87,8 +90,11 @@ function main() {
     if(controls.tesselations != prevTesselations)
     {
       prevTesselations = controls.tesselations;
-      icosphere = new Icosphere(vec3.fromValues(0, 0, 0), 1, prevTesselations);
-      icosphere.create();
+      core = new Icosphere(vec3.fromValues(0, 0, 0), 1, prevTesselations);
+      core.create();
+
+      fire = new Icosphere(vec3.fromValues(0, 0, 0), 1.01, prevTesselations);
+      fire.create();
     }
 
     // background
@@ -99,7 +105,7 @@ function main() {
     gl.enable(gl.DEPTH_TEST);
 
     renderer.render(camera, custom, [
-      icosphere,
+      core,
     ], controls.color, time);
     stats.end();
 

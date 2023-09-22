@@ -103,6 +103,11 @@ class ShaderProgram {
     }
   }
 
+  setCustomParam(target : Object) {
+    this.use();
+    
+  }
+
   draw(d: Drawable) {
     this.use();
 

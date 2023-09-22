@@ -13,7 +13,21 @@ import ShaderProgram, {Shader} from './rendering/gl/ShaderProgram';
 const controls = {
   tesselations: 5,
   'Load Scene': loadScene, // A function pointer, essentially
-  color: [255, 0, 0, 255],
+
+  'Base shape - amplitude': 0.5,
+  'Base shape - freq': 2,
+  'FBM - amplitude': 0.2,
+  'FBM - one over persistence': 8,
+  'FBM - freq': 16,
+  'FBM - octaves': 8,
+
+  'Color offset': 0.0,
+
+  'Bloom - threshold': 0.9,
+  'Bloom - intensity': 1.0,
+
+  'Reset': reset
+  //color: [255, 0, 0, 255],
 };
 
 let core: Icosphere;
@@ -31,6 +45,21 @@ function loadScene() {
   square.create();
 }
 
+function reset() {
+  controls['Base shape - amplitude'] = 0.5;
+
+  controls['Base shape - freq'] = 2;
+  controls['FBM - amplitude'] = 0.2;
+  controls['FBM - one over persistence'] = 8;
+  controls['FBM - freq'] = 16;
+  controls['FBM - octaves'] = 8;
+
+  controls['Color offset'] = 0;
+
+  controls['Bloom - threshold'] = 0.9;
+  controls['Bloom - intensity'] = 1.0;
+}
+
 function main() {
   // Initial display for framerate
   const stats = Stats();
@@ -44,7 +73,19 @@ function main() {
   const gui = new DAT.GUI();
   gui.add(controls, 'tesselations', 0, 8).step(1);
   gui.add(controls, 'Load Scene');
-  gui.addColor(controls, 'color')
+  gui.add(controls, 'Base shape - amplitude', 0.4, 0.6).step(0.02).listen();
+  gui.add(controls, 'Base shape - freq', 1.0, 3.0).step(0.2).listen();
+  gui.add(controls, 'FBM - amplitude', 0.1, 1.0).step(0.1).listen();
+  gui.add(controls, 'FBM - one over persistence', 2, 16).step(2).listen(); 
+  gui.add(controls, 'FBM - freq', 8, 24).step(2).listen();
+  gui.add(controls, 'FBM - octaves', 1, 16).step(1).listen();
+
+  gui.add(controls, 'Color offset', -1.0, 1.0).step(0.2).listen();
+
+  gui.add(controls, 'Bloom - threshold', 0.6, 1.0).step(0.5).listen();
+  gui.add(controls, 'Bloom - intensity', 0.5, 1.5).step(0.1).listen();
+
+  gui.add(controls, "Reset");
 
   // get canvas and webgl context
   const canvas = <HTMLCanvasElement> document.getElementById('canvas');
@@ -96,17 +137,20 @@ function main() {
       fire.create();
     }
 
+    flat.setCustomParam(controls);
+
     // background
     gl.disable(gl.DEPTH_TEST);
     renderer.render(camera, flat, [
       square,
-    ], controls.color, time);
+    ], time);
     gl.enable(gl.DEPTH_TEST);
 
+    custom.setCustomParam(controls);
     gl.disable(gl.BLEND);
     renderer.render(camera, custom, [
       core,
-    ], controls.color, time);
+    ], time);
     stats.end();
 
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);

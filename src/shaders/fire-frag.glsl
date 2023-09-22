@@ -63,22 +63,5 @@ float fbm(vec3 p) {
 void main(){
     float time = fs_Time;
 
-    float gradient = smoothstep(-u_Radius, u_Radius + 0.5f, fs_Pos.y - cos(0.005 * time)); //TODO
-    vec4 brighterColor = vec4(1.0, 0.65, 0.1, 0.25);
-    vec4 darkerColor = vec4(1.0, 0.0, 0.15, 0.625);
-    vec4 middleColor = mix(brighterColor, darkerColor, 0.5);
-
-    float noiseTexel = fbm(vec3(fs_Pos));
-    
-    float firstStep = smoothstep(0.0, noiseTexel, gradient);
-    float darkerColorStep = smoothstep(0.0, noiseTexel, gradient - 0.2f);
-    float darkerColorPath = firstStep - darkerColorStep;
-    vec4 color = mix(brighterColor, darkerColor, darkerColorPath);
-
-    float middleColorStep = smoothstep(0.0, noiseTexel, gradient - 0.2 * 2.0);
-    
-    color = mix(color, middleColor, darkerColorStep - middleColorStep);
-    color = mix(vec4(0.0), color, firstStep);
-
-    out_Col = color;
+    out_Col = vec4(0., 0., 0., 1.0);
 }

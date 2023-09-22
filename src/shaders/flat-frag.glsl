@@ -53,7 +53,7 @@ float star_noise(vec2 coord) {
 
 vec3 getStarColor(vec2 uv) {
     // use int for noise to stablize star field
-    vec2 coordFloor = floor(uv * 1000.0);
+    vec2 coordFloor = floor(uv * 973.0);
     float starVal = star_noise(coordFloor);
 
     return vec3(starVal);
@@ -64,9 +64,8 @@ const vec3 darkviolet = vec3(0.5, 0.1, 0.9);
 
 void main() {
   vec2 uv = (2.0 * gl_FragCoord.xy - u_Dimensions.xy) / u_Dimensions.y;
-  uv *= 2.34;
-
   out_Col += vec4(getStarColor(uv), 0.0);
+  uv *= 2.34;
 
   float time = float(u_Time) * 0.1;
   vec2 q = vec2(fbm(uv - 0.001 * cos(time)), 

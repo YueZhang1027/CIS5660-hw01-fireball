@@ -23,9 +23,9 @@ let prevTesselations: number = 5;
 let time: number = 0;
 
 function loadScene() {
-  core = new Icosphere(vec3.fromValues(0, 0, 0), 1, controls.tesselations);
+  core = new Icosphere(vec3.fromValues(0, 0, 0), 1.0, controls.tesselations);
   core.create();
-  fire = new Icosphere(vec3.fromValues(0, 0, 0), 1.01, controls.tesselations);
+  fire = new Icosphere(vec3.fromValues(0, 0, 0), 1.2, controls.tesselations);
   fire.create();
   square = new Square(vec3.fromValues(0, 0, 0));
   square.create();
@@ -65,12 +65,6 @@ function main() {
   renderer.setClearColor(0.2, 0.2, 0.2, 1);
   gl.enable(gl.DEPTH_TEST);
 
-  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-  gl.enable(gl.BLEND);
-  gl.enable(gl.SRC_ALPHA);
-  gl.enable(gl.ONE_MINUS_SRC_ALPHA);
-  gl.enable(gl.BLEND_SRC_ALPHA);
-
   const flat = new ShaderProgram([
     new Shader(gl.VERTEX_SHADER, require('./shaders/flat-vert.glsl')),
     new Shader(gl.FRAGMENT_SHADER, require('./shaders/flat-frag.glsl')),
@@ -79,6 +73,11 @@ function main() {
   const custom = new ShaderProgram([
     new Shader(gl.VERTEX_SHADER, require('./shaders/core-vert.glsl')),
     new Shader(gl.FRAGMENT_SHADER, require('./shaders/core-frag.glsl')),
+  ]);
+
+  const fire_prog = new ShaderProgram([
+    new Shader(gl.VERTEX_SHADER, require('./shaders/fire-vert.glsl')),
+    new Shader(gl.FRAGMENT_SHADER, require('./shaders/fire-frag.glsl')),
   ]);
 
   // This function will be called every frame
@@ -93,7 +92,7 @@ function main() {
       core = new Icosphere(vec3.fromValues(0, 0, 0), 1, prevTesselations);
       core.create();
 
-      fire = new Icosphere(vec3.fromValues(0, 0, 0), 1.01, prevTesselations);
+      fire = new Icosphere(vec3.fromValues(0, 0, 0), 1.2, prevTesselations);
       fire.create();
     }
 
@@ -104,10 +103,24 @@ function main() {
     ], controls.color, time);
     gl.enable(gl.DEPTH_TEST);
 
+    gl.disable(gl.BLEND);
     renderer.render(camera, custom, [
       core,
     ], controls.color, time);
     stats.end();
+
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.enable(gl.BLEND);
+
+    gl.cullFace(gl.BACK);
+    gl.enable(gl.CULL_FACE);
+
+    // renderer.render(camera, fire_prog, [
+    //   fire,
+    // ], controls.color, time);
+    // stats.end();
+
+    gl.disable(gl.CULL_FACE);
 
     // Tell the browser to call `tick` again whenever it renders a new frame
     requestAnimationFrame(tick);

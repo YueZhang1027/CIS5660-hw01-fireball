@@ -27,7 +27,8 @@ out vec4 fs_Col;            // The color of each vertex. This is implicitly pass
 
 out vec4 fs_Pos;
 out float fs_Time;
-out float fs_Density;
+
+out float fs_Core;
 
 const vec4 lightPos = vec4(5, 5, 3, 1); //The position of our virtual light, which is used to compute the shading of
                                         //the geometry in the fragment shader.
@@ -151,38 +152,11 @@ void main()
     // combining fbm noise and turblence perlin noise (distortion) to form shape
     vec4 modelposition = u_Model * vs_Pos;   // Temporarily store the transformed vertex positions for use below
 
-    // basic turbulence shape, determine color
-    vec4 normal_noise = vec4(0.0f);
-
-    float normal_offset = 0.0;
-    float turbulence_noise = turbulence(vec3(vs_Pos) + vec3(0.2f * time));
-
-    normal_offset += turbulence_noise;
-
-    // Use fbm to produce smoke/fire surrounding
-    // Domain Warping FBM, ref: https://thebookofshaders.com/13/
-
-    vec3 q = vec3(fbm_displacement(vec3(vs_Pos) - 0.001 * time), 
-                  fbm_displacement(vec3(vs_Pos) + vec3 (0.05, -0.03, 0.02)),
-                  fbm_displacement(vec3(vs_Pos) + 0.05 * cos(0.005 * time)));
-
-    vec3 r = vec3(fbm_displacement(vec3(vs_Pos) + q + vec3(0.3, 0.2, -0.4) + 0.15 * time), 
-                  fbm_displacement(vec3(vs_Pos) + q + vec3(-2.3, 8.2, -5.4) + 0.126 * time), 
-                  fbm_displacement(vec3(vs_Pos) + q + vec3(-3.3, -4.6, 6.7) - 0.24 * time));
-
-    float fbm_noise = fbm_displacement(vec3(vs_Nor) + r);
-    normal_offset += fbm_noise;
-
     vec3 flame_dir = vec3(0., 1., 0.);
     float prod = dot(flame_dir, vec3(fs_Nor));
     if (prod > 0.0) {
-        //modelposition += vec4(flame_dir * prod, 0.0) * fbm_noise * 6.0;
+        //modelposition += vec4(flame_dir * prod, 0.0) * fbm_noise * 3.5;
     }
-
-
-    modelposition += normal_offset * fs_Nor;
-
-    fs_Density = turbulence(vec3(vs_Pos) + vec3(0.2f * time)) + length(vec3(vs_Pos)); // offset + length
 
     fs_LightVec = lightPos - modelposition;  // Compute the direction in which the light source lies
 

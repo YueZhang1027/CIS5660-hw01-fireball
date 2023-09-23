@@ -1,5 +1,17 @@
 # [Project 1: Noise](https://github.com/CIS-566-Fall-2022/hw01-fireball-base)
 
+## [Demo](https://yuezhang1027.github.io/CIS5660-hw01-fireball/)
+
+![](res/final.gif)
+I create the fireball vertex from a combination of sum of multiple weighted perlin noise and FBM noise. Perlin noise works as the basic shape changing the spherical look a little, white FBM noise works as the bumping flame on the surface. From the paper [here](https://dl.acm.org/doi/10.1145/74334.74359) to recreate a fire hypertexture accoridng to the density of fire. Here I use the turbulence formula to calculate the density.
+
+I use the interpolation along a solar colormap to figure out the color mix from density with an offset. Also, I use a bloom filter to make the ball emitting light by itself. 
+
+The background is a halo shining in the edge and a blue-violet starfield, created by sinusoidal functions.
+
+Here is a figure after changing some parameters, there are plenty parameter to adjust the look of the ball:
+![](res/final_change.png)
+
 ## Objective
 
 Get comfortable with using WebGL and its shaders to generate an interesting 3D, continuous surface using a multi-octave noise algorithm.
@@ -71,3 +83,14 @@ Choose one of the following options:
 - Publish your project to gh-pages. `npm run deploy`. It should now be visible at http://username.github.io/repo-name
 - Create a [pull request](https://help.github.com/articles/creating-a-pull-request/) to this repository, and in the comment, include a link to your published project.
 - Submit the link to your pull request on Canvas.
+
+## For Fun
+Here are some screenshots of the ball in produce:
+
+![](res/vertex_1st.gif)
+This is the first vertex shape I produce, hope for some shape of fire flame in the front. It is very cute, though the top of it is too messy with a lot of difference in length. (Maybe try again with other interpolation other than native extension for noise).
+
+![](res/vertex_2nd.gif)
+After the shape has stabled, I produce this for fragment shader with only red and yellow for interpolation. The color looks too solid and is similar to some kind of [stir fried tomato with eggs](https://en.wikipedia.org/wiki/Stir-fried_tomato_and_scrambled_eggs).
+
+I hope to add some half-transparent flame surronding the ball in the future.

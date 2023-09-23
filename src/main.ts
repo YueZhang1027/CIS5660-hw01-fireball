@@ -80,6 +80,10 @@ function main() {
   stats.domElement.style.top = '0px';
   document.body.appendChild(stats.domElement);
 
+  // let audio = new Audio('./theme.mp3');
+  // //audio.load();
+  // audio.play();
+
   // Add controls to the gui
   const gui = new DAT.GUI();
   gui.add(controls, 'tesselations', 0, 8).step(1);

@@ -15,6 +15,13 @@ uniform mat4 u_ViewProj;    // The matrix that defines the camera's transformati
                             // but in HW3 you'll have to generate one yourself
 uniform int u_Time;
 
+uniform float u_ShapeAmp;
+uniform float u_ShapeFreq;
+uniform float u_FBMAmp;
+uniform float u_FBMFreq;
+uniform int u_FBMOneOverPersistence;
+uniform int u_FBMOctaves;
+
 in vec4 vs_Pos;             // The array of vertex positions passed to the shader
 
 in vec4 vs_Nor;             // The array of vertex normals passed to the shader
@@ -73,10 +80,10 @@ float interpNoise3D(vec3 p) {
 // ref: https://www.shadertoy.com/view/3lcfWN
 float fbm_displacement(vec3 p) {
     float total = 0.0;
-    float persistence = 1.f / 8.f;
-    int octaves = 8;
-    float freq = 16.f;
-    float amp = 0.2f;
+    float persistence = 1.f / float(u_FBMOneOverPersistence);
+    int octaves = u_FBMOctaves;
+    float freq = u_FBMFreq;
+    float amp = u_FBMAmp;
     for(int i = 1; i <= octaves; i++) {
         total += interpNoise3D(p * freq) * amp;
 
@@ -122,8 +129,8 @@ float perlinNoise(vec3 p) {
 // ref: https://www.shadertoy.com/view/MtXSzS
 float turbulence(vec3 p) {
   float value = 0.0;
-  float step = 2.0;
-  float amplitude = 0.5;
+  float step = u_ShapeFreq;
+  float amplitude = u_ShapeAmp;
 
   for (int f = 1 ; f <= TURBULENCE_STEP; f++ ){
     value += abs(perlinNoise(vec3(step * p)) / step);

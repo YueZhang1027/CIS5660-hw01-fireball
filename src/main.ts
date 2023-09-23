@@ -15,7 +15,7 @@ const controls = {
   'Load Scene': loadScene, // A function pointer, essentially
 
   'Base shape - amplitude': 0.5,
-  'Base shape - freq': 2,
+  'Base shape - freq': 2.0,
   'FBM - amplitude': 0.2,
   'FBM - one over persistence': 8,
   'FBM - freq': 16,
@@ -47,17 +47,28 @@ function loadScene() {
 
 function reset() {
   controls['Base shape - amplitude'] = 0.5;
-
-  controls['Base shape - freq'] = 2;
+  controls['Base shape - freq'] = 2.0;
   controls['FBM - amplitude'] = 0.2;
   controls['FBM - one over persistence'] = 8;
   controls['FBM - freq'] = 16;
   controls['FBM - octaves'] = 8;
 
   controls['Color offset'] = 0;
-
   controls['Bloom - threshold'] = 0.9;
   controls['Bloom - intensity'] = 1.0;
+}
+
+function setCustomParam(prog: ShaderProgram) {
+  prog.setShapeAmp(controls['Base shape - amplitude']);
+  prog.setShapeFreq(controls['Base shape - freq']);
+  prog.setFBMAmp(controls['FBM - amplitude']);
+  prog.setFBMFreq(controls['FBM - freq']);
+  prog.setFBMOneOverPersistence(controls['FBM - one over persistence']);
+  prog.setFBMOctave(controls['FBM - octaves']);
+
+  prog.setColorOffset(controls['Color offset']);
+  prog.setBloomThreshold(controls['Bloom - threshold']);
+  prog.setBloomIntensity(controls['Bloom - intensity']);
 }
 
 function main() {
@@ -82,7 +93,7 @@ function main() {
 
   gui.add(controls, 'Color offset', -1.0, 1.0).step(0.2).listen();
 
-  gui.add(controls, 'Bloom - threshold', 0.6, 1.0).step(0.5).listen();
+  gui.add(controls, 'Bloom - threshold', 0.6, 1.0).step(0.1).listen();
   gui.add(controls, 'Bloom - intensity', 0.5, 1.5).step(0.1).listen();
 
   gui.add(controls, "Reset");
@@ -137,7 +148,7 @@ function main() {
       fire.create();
     }
 
-    flat.setCustomParam(controls);
+    setCustomParam(flat);
 
     // background
     gl.disable(gl.DEPTH_TEST);
@@ -146,7 +157,7 @@ function main() {
     ], time);
     gl.enable(gl.DEPTH_TEST);
 
-    custom.setCustomParam(controls);
+    setCustomParam(custom);
     gl.disable(gl.BLEND);
     renderer.render(camera, custom, [
       core,

@@ -32,6 +32,16 @@ class ShaderProgram {
   unifTime : WebGLUniformLocation;
   unifDimension : WebGLUniformLocation;
 
+  unifShapeAmp : WebGLUniformLocation;
+  unifShapeFreq : WebGLUniformLocation;
+  unifFBMAmp : WebGLUniformLocation;
+  unifFBMFreq : WebGLUniformLocation;
+  unifFBMOneOverPersistence : WebGLUniformLocation;
+  unifFBMOctaves : WebGLUniformLocation;
+  unifColorOffset : WebGLUniformLocation;
+  unifBloomThreshold : WebGLUniformLocation;
+  unifBloomIntensity : WebGLUniformLocation;
+
   constructor(shaders: Array<Shader>) {
     this.prog = gl.createProgram();
 
@@ -52,6 +62,16 @@ class ShaderProgram {
     this.unifColor      = gl.getUniformLocation(this.prog, "u_Color");
     this.unifTime       = gl.getUniformLocation(this.prog, "u_Time");
     this.unifDimension  = gl.getUniformLocation(this.prog, "u_Dimensions");
+
+    this.unifShapeAmp   = gl.getUniformLocation(this.prog, "u_ShapeAmp");
+    this.unifShapeFreq  = gl.getUniformLocation(this.prog, "u_ShapeFreq");
+    this.unifFBMAmp     = gl.getUniformLocation(this.prog, "u_FBMAmp");
+    this.unifFBMFreq    = gl.getUniformLocation(this.prog, "u_FBMFreq");
+    this.unifFBMOneOverPersistence = gl.getUniformLocation(this.prog, "u_FBMOneOverPersistence");
+    this.unifFBMOctaves = gl.getUniformLocation(this.prog, "u_FBMOctaves");
+    this.unifColorOffset     = gl.getUniformLocation(this.prog, "u_ColorOffset");
+    this.unifBloomThreshold  = gl.getUniformLocation(this.prog, "u_BloomThres");
+    this.unifBloomIntensity  = gl.getUniformLocation(this.prog, "u_BloomIntensity");
   }
 
   use() {
@@ -103,9 +123,67 @@ class ShaderProgram {
     }
   }
 
-  setCustomParam(target : Object) {
+  setShapeAmp(shapeAmp : number) {
     this.use();
-    
+    if (this.unifShapeAmp != -1) {
+      gl.uniform1f(this.unifShapeAmp, shapeAmp);
+    }
+  }
+
+  setShapeFreq(shapeFreq : number) {
+    this.use();
+    if (this.unifShapeFreq != -1) {
+      gl.uniform1f(this.unifShapeFreq, shapeFreq);
+    }
+  }
+
+  setFBMAmp(fbmAmp : number) {
+    this.use();
+    if (this.unifFBMAmp != -1) {
+      gl.uniform1f(this.unifFBMAmp, fbmAmp);
+    }
+  }
+
+  setFBMFreq(fbmFreq : number) {
+    this.use();
+    if (this.unifFBMFreq != -1) {
+      gl.uniform1f(this.unifFBMFreq, fbmFreq);
+    }
+  }
+
+  setFBMOneOverPersistence(oneOverPersistence : number) {
+    this.use();
+    if (this.unifFBMOneOverPersistence != -1) {
+      gl.uniform1i(this.unifFBMOneOverPersistence, oneOverPersistence);
+    }
+  }
+
+  setFBMOctave(fbmOctaves : number) {
+    this.use();
+    if (this.unifFBMOctaves != -1) {
+      gl.uniform1i(this.unifFBMOctaves, fbmOctaves);
+    }
+  }
+
+  setColorOffset(colorOffset : number) {
+    this.use();
+    if (this.unifColorOffset != -1) {
+      gl.uniform1f(this.unifColorOffset, colorOffset);
+    }
+  }
+
+  setBloomThreshold(bloomThreshold : number) {
+    this.use();
+    if (this.unifBloomThreshold != -1) {
+      gl.uniform1f(this.unifBloomThreshold, bloomThreshold);
+    }
+  }
+
+  setBloomIntensity(bloomIntensity : number) {
+    this.use();
+    if (this.unifBloomIntensity != -1) {
+      gl.uniform1f(this.unifBloomIntensity, bloomIntensity);
+    }
   }
 
   draw(d: Drawable) {

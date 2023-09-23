@@ -5,6 +5,10 @@ precision highp float;
 uniform vec4 u_Color; // The color with which to render this instance of geometry.
 uniform float u_Radius;
 
+uniform float u_ColorOffset;
+uniform float u_BloomThres;
+uniform float u_BloomIntensity;
+
 // These are the interpolated values out of the rasterizer, so you can't know
 // their specific values without knowing the vertices that contributed to them
 in vec4 fs_Nor;
@@ -33,7 +37,8 @@ const float[7] thresholds = float[] (
 );
 
 vec3 getCoronaColor(float density) {
-    float interpolateVal = smoothstep(0.92, 1.26, fs_Density);
+    density += 0.05 * u_ColorOffset;
+    float interpolateVal = smoothstep(0.92, 1.26, density);
 
     if (interpolateVal < thresholds[0]) {
         return colorPallete[0];
@@ -56,7 +61,7 @@ void main(){
 
     // bloom filter for emission core
     vec3 grayScale = vec3(0.2126, 0.7152, 0.0722);
-    float result = 1.0 + (dot(base, grayScale) > 0.9 ? 1.0 : 0.0);
+    float result = 1.0 + (dot(base, grayScale) > u_BloomThres ? u_BloomIntensity : 0.0);
 
     out_Col = vec4(base * result, 1.0);
 }
